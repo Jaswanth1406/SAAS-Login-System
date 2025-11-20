@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+// Don't add /api here - it's in the backend routes
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -52,19 +53,19 @@ axiosInstance.interceptors.response.use(
 
 const api = {
   signup: async (userData) => {
-    return await axiosInstance.post('/auth/signup', userData); // Changed from /signup
+    return await axiosInstance.post('/api/auth/signup', userData);
   },
 
   login: async (credentials) => {
-    return await axiosInstance.post('/auth/login', credentials); // Changed from /login
+    return await axiosInstance.post('/api/auth/login', credentials);
   },
 
   getProfile: async () => {
-    return await axiosInstance.get('/me');
+    return await axiosInstance.get('/api/me');
   },
 
   getLogs: async () => {
-    return await axiosInstance.get('/logs');
+    return await axiosInstance.get('/api/logs');
   },
 };
 
