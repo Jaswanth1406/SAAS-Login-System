@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
-  "main": "index.js",
+  "main": "backend/src/index.js",
   "scripts": {
-    "start": "node --env-file=.env src/index.js",
-    "dev": "node --watch --env-file=.env src/index.js"
+    "start": "node --env-file=.env backend/src/index.js",
+    "dev": "node --watch --env-file=.env backend/src/index.js"
   },
   "keywords": [],
   "author": "",

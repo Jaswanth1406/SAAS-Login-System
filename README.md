@@ -1,6 +1,6 @@
-# 📘 Mini SaaS Login System – Backend
+# 📘 Mini SaaS Login System – Monorepo (Frontend + Backend)
 
-A robust backend for a mini SaaS authentication system. This project handles user registration, secure login, JWT token management, and audit logging using Node.js, Express, and PostgreSQL.
+This repository now contains both the **backend** (under `backend/`) and a React **frontend** (under `frontend/`). The backend provides authentication (signup/login/logout), JWT management with token revocation, and audit logging. The frontend consumes these APIs.
 
 ## 🚀 Tech Stack
 
@@ -18,38 +18,48 @@ A robust backend for a mini SaaS authentication system. This project handles use
 * ✅ **Audit Logs:** Tracks the last 5 login timestamps for security auditing.
 * ✅ **Database Migrations:** SQL scripts to initialize schema.
 
-## 📁 Folder Structure
+## 📁 High-Level Structure
 
 ```
-src/
-│── index.js             # Entry point
-│── app.js               # Express app setup
-│── db.js                # Database connection logic
-│
-├── routes/
-│   ├── auth.js          # Auth routes (login/signup)
-│   └── user.js          # User data routes
-│
-├── controllers/
-│   ├── authController.js
-│   └── userController.js
-│
-└── middleware/
-    └── authMiddleware.js # JWT verification
+backend/
+  ├── package.json          # Backend dependencies & scripts
+  ├── migrations/           # SQL migrations (001_init.sql, 002_revoked_tokens.sql)
+  └── src/
+      ├── index.js          # Backend entry
+      ├── app.js            # Express app wiring
+      ├── db.js             # PostgreSQL connection + timezone setup
+      ├── controllers/      # Route handlers
+      ├── routes/           # Express routers
+      ├── middleware/       # Auth middleware (JWT + revocation)
+      └── utils/            # Validation utilities
 
-migrations/
-│── 001_init.sql         # SQL Schema setup
+frontend/
+  ├── package.json          # React app dependencies & scripts
+  ├── src/                  # React source (components, context, services)
+  ├── public/               # Static assets
+  └── tailwind.config.js    # Tailwind setup (if used)
+
+.env                        # Shared environment variables (backend reads this)
+README.md                   # Documentation
 ```
 
 ## 🔧 Setup & Installation
 
+git clone <repository-url>
 ### 1. Clone & Install Dependencies
 
-```
-# Clone the repo
-git clone <repository-url>
+Clone the repo and install dependencies separately for backend and frontend.
 
-# Install dependencies
+```
+git clone <repository-url>
+cd SAAS-Login-System
+
+# Backend deps
+cd backend
+npm install
+
+# Frontend deps (in a separate terminal or after going back)
+cd ../frontend
 npm install
 ```
 
@@ -87,21 +97,22 @@ createdb -U postgres saas_login
 psql -U postgres -d saas_login -f migrations/001_init.sql
 ```
 
-## 🚀 Running the Server
+npm start
+## 🚀 Running Apps
 
-**Development Mode** (Auto-reloads on save):
-
+Backend (Express API):
 ```
+cd backend
 npm run dev
 ```
+Runs at `http://localhost:5000`.
 
- **Production Mode** :
-
+Frontend (React):
 ```
+cd frontend
 npm start
 ```
-
-*The server runs on `http://localhost:5000` by default.*
+Runs at `http://localhost:3000` and proxies API calls to port 5000 (see `proxy` in `frontend/package.json`).
 
 ## 🔥 API Documentation
 
@@ -227,31 +238,71 @@ Login and receive an access token.
 
 #### **POST** `/api/auth/logout`
 
-Invalidate the current JWT (requires Authorization header). The token will be recorded in the `revoked_tokens` table so it can no longer be used.
+Invalidate current JWT. Token is inserted into `revoked_tokens` and rejected on subsequent requests.
 
-**Headers:**
-
+Headers:
 ```
 Authorization: Bearer <YOUR_JWT_TOKEN>
 ```
-
-**Request Body:** None
-
-**Response (example):**
-
+Body: none
+Response:
 ```
-{
-  "message": "Logout successful"
-}
+{ "message": "Logged out successfully" }
 ```
+
+## 🔒 Token Revocation Strategy
+
+Logout writes the token (and its expiry) into `revoked_tokens`. Middleware checks this table for every authenticated request.
+
+Periodic cleanup (recommended):
+```
+DELETE FROM revoked_tokens WHERE expires_at IS NOT NULL AND expires_at < now();
+```
+
+Alternative approach (not implemented): add `token_version` column in `users` and embed it in JWT to mass-invalidate.
 
 ## 🧪 Testing with Postman
 
 1. **Signup:** Send a `POST` request to `http://localhost:5000/api/auth/signup`.
 2. **Login:** Send a `POST` to `http://localhost:5000/api/auth/login` and copy the `token` from the response.
 3. **Access Protected Data:**
-   * Open a new tab for `GET http://localhost:5000/api/me`.
+  * Open a new tab for `GET http://localhost:5000/api/me`.
    * Go to the **Authorization** tab.
    * Select  **Bearer Token** .
    * Paste your JWT token.
    * Send the request.
+
+  4. **Logout:**
+  ```
+  POST http://localhost:5000/api/auth/logout
+  Authorization: Bearer <TOKEN>
+  ```
+  Then retry `GET /api/me` with same token → should return 401.
+
+  5. **Check revocation table (optional):**
+  ```
+  SELECT token, revoked_at FROM revoked_tokens ORDER BY revoked_at DESC LIMIT 10;
+  ```
+
+  ## ✅ Having Two package.json Files
+
+  Yes, this is normal in a full-stack setup:
+  - `backend/package.json` manages server dependencies (Express, pg, bcrypt, etc.)
+  - `frontend/package.json` manages client dependencies (React, axios, tailwind, etc.)
+
+  They are isolated; run installs and scripts from their respective folders. Environment variables are shared via the root `.env` (backend only). Frontend should never expose secrets like `JWT_SECRET`.
+
+  ## 📦 Deploy Notes (Brief)
+
+  Backend:
+  - Provide `DATABASE_URL`, `JWT_SECRET`, `PORT` env vars in hosting platform.
+
+  Frontend:
+  - Point API base URL to deployed backend (`REACT_APP_API_BASE=https://your-backend.example.com`).
+
+  ## 🛠 Next Improvements (Suggestions)
+  - Refresh token + rotation flow
+  - Rate limiting (login, signup)
+  - Password reset flow
+  - Token versioning for mass invalidation
+  - Centralized error handler middleware
