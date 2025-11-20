@@ -1,3 +1,4 @@
+HEAD
 # Dependencies
 node_modules/
 /.pnp
@@ -33,3 +34,7 @@ lerna-debug.log*
 
 # OS
 Thumbs.db
+=======
+.env
+node_modules/
+>>>>>>> master
