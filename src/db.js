@@ -12,7 +12,8 @@ const pool = new Pool({
   },
   connectionTimeoutMillis: 10000,
   idleTimeoutMillis: 30000,
-  max: 20
+  max: 20,
+  options: '-c timezone=Asia/Kolkata'
 });
 
 pool.on('connect', () => {
