@@ -198,6 +198,52 @@ Get the last 5 login timestamps for the current user.
   { "login_at": "2025-01-19T16:20:00.000Z" }
 ]
 ```
+#### **POST** `/api/auth/login`
+
+Login and receive an access token.
+
+**Request Body:**
+
+```
+{
+  "email": "john@example.com",
+  "password": "password123"
+}
+```
+
+**Response:**
+
+```
+{
+  "message": "Login success",
+  "token": "eyJhbGciOiJIUzI1NiIsInR...",
+  "user": {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john@example.com"
+  }
+}
+```
+
+#### **POST** `/api/auth/logout`
+
+Invalidate the current JWT (requires Authorization header). The token will be recorded in the `revoked_tokens` table so it can no longer be used.
+
+**Headers:**
+
+```
+Authorization: Bearer <YOUR_JWT_TOKEN>
+```
+
+**Request Body:** None
+
+**Response (example):**
+
+```
+{
+  "message": "Logout successful"
+}
+```
 
 ## 🧪 Testing with Postman
 
