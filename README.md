@@ -4,19 +4,42 @@ This repository now contains both the **backend** (under `backend/`) and a React
 
 ## 🚀 Tech Stack
 
+**Backend:**
 * **Runtime:** Node.js (ES Modules)
 * **Framework:** Express.js
 * **Database:** PostgreSQL
 * **Authentication:** JWT (JSON Web Tokens)
 * **Security:** Bcrypt (Password hashing)
 
+**Frontend:**
+* **Framework:** React 18
+* **Routing:** React Router v6
+* **HTTP Client:** Axios
+* **Styling:** Tailwind CSS
+* **Icons:** Lucide React
+* **State Management:** React Context API
+
 ## 🎯 Features
 
-* ✅ **User Signup:** Register new users with secure password hashing.
-* ✅ **User Login:** Authenticate users and issue JWTs.
-* ✅ **Protected Routes:** Middleware to guard sensitive APIs.
-* ✅ **Audit Logs:** Tracks the last 5 login timestamps for security auditing.
-* ✅ **Database Migrations:** SQL scripts to initialize schema.
+**Backend:**
+* ✅ **User Signup:** Register new users with secure password hashing
+* ✅ **User Login:** Authenticate users and issue JWTs
+* ✅ **User Logout:** Token revocation with blacklist table
+* ✅ **Protected Routes:** Middleware to guard sensitive APIs
+* ✅ **Audit Logs:** Tracks login timestamps for security auditing
+* ✅ **Database Migrations:** SQL scripts to initialize schema
+* ✅ **IST Timezone:** All timestamps stored in Indian Standard Time
+* ✅ **CORS:** Configured for cross-origin requests
+
+**Frontend:**
+* ✅ **Modern UI:** Clean, responsive design with Tailwind CSS
+* ✅ **Authentication Flow:** Login, signup, and logout pages
+* ✅ **Protected Dashboard:** Access control with route guards
+* ✅ **User Profile:** View account details and login history
+* ✅ **Toast Notifications:** Real-time feedback for user actions
+* ✅ **Error Handling:** Graceful error messages and validation
+* ✅ **Token Management:** Automatic token storage and refresh
+* ✅ **Loading States:** Visual feedback during API calls
 
 ## 📁 High-Level Structure
 
@@ -35,9 +58,24 @@ backend/
 
 frontend/
   ├── package.json          # React app dependencies & scripts
-  ├── src/                  # React source (components, context, services)
-  ├── public/               # Static assets
-  └── tailwind.config.js    # Tailwind setup (if used)
+  ├── public/               # Static assets (favicon, index.html)
+  ├── tailwind.config.js    # Tailwind CSS configuration
+  ├── postcss.config.js     # PostCSS configuration
+  └── src/
+      ├── index.js          # React entry point
+      ├── App.jsx           # Main app component with routing
+      ├── index.css         # Global styles + Tailwind imports
+      ├── components/       # React components
+      │   ├── auth/         # Login, Signup pages
+      │   ├── dashboard/    # Dashboard, Profile pages
+      │   ├── common/       # Shared components (Toast, etc.)
+      │   └── ProtectedRoute.jsx  # Route guard component
+      ├── context/          # React Context providers
+      │   ├── AuthContext.jsx     # Authentication state
+      │   └── ToastContext.jsx    # Toast notifications
+      ├── services/         # API service layer
+      │   └── api.js        # Axios instance + API methods
+      └── utils/            # Utility functions
 
 .env                        # Shared environment variables (backend reads this)
 README.md                   # Documentation
@@ -65,7 +103,7 @@ npm install
 
 ### 2. Environment Configuration
 
-Create a `.env` file in the root directory and add the following:
+**Backend:** Create a `.env` file in the root directory and add the following:
 
 ```
 PORT=5000
@@ -79,6 +117,14 @@ DATABASE_URL=postgres://postgres:MyPassword123@localhost:5432/saas_login
 # Example for macOS (Homebrew/Postgres.app often has no password):
 DATABASE_URL=postgres://myMacUsername:@localhost:5432/saas_login
 ```
+
+**Frontend:** No environment variables needed for local development. For production deployment, set:
+
+```env
+REACT_APP_API_URL=https://your-backend-url.com
+```
+
+The frontend defaults to `http://localhost:5000` if not set.
 
 ### 3. Database Setup
 
@@ -113,6 +159,53 @@ cd frontend
 npm start
 ```
 Runs at `http://localhost:3000` and proxies API calls to port 5000 (see `proxy` in `frontend/package.json`).
+
+## 🎨 Frontend Features & Pages
+
+### Pages
+
+**Public Routes:**
+- **`/login`** - User login with email and password
+- **`/signup`** - New user registration with name, email, and password
+
+**Protected Routes** (require authentication):
+- **`/dashboard`** - Main dashboard with user overview
+- **`/profile`** - User profile with account details and login history
+
+### Components
+
+**Auth Components:**
+- `Login.jsx` - Login form with validation and error handling
+- `Signup.jsx` - Signup form with password strength validation
+
+**Dashboard Components:**
+- `Dashboard.jsx` - Main dashboard view with user stats
+- `Profile.jsx` - User profile with audit logs display
+
+**Common Components:**
+- `ProtectedRoute.jsx` - Route guard for authenticated pages
+- `Toast.jsx` - Toast notification system
+
+### Context Providers
+
+**AuthContext:**
+- Manages user authentication state
+- Provides `login`, `signup`, `logout` functions
+- Handles token storage in localStorage
+- Auto-checks authentication on app load
+
+**ToastContext:**
+- Manages toast notifications
+- Provides `showToast(message, type)` function
+- Auto-dismisses after 3 seconds
+
+### API Service
+
+The `api.js` service provides:
+- Axios instance with base URL configuration
+- Request interceptor to add JWT token
+- Response interceptor for error handling
+- API methods: `signup`, `login`, `getProfile`, `getLogs`
 
 ## 🔥 API Documentation
 
@@ -292,17 +385,86 @@ Alternative approach (not implemented): add `token_version` column in `users` an
 
   They are isolated; run installs and scripts from their respective folders. Environment variables are shared via the root `.env` (backend only). Frontend should never expose secrets like `JWT_SECRET`.
 
-  ## 📦 Deploy Notes (Brief)
+## 📦 Deployment Guide
 
-  Backend:
-  - Provide `DATABASE_URL`, `JWT_SECRET`, `PORT` env vars in hosting platform.
+### Deploy Backend on Render
 
-  Frontend:
-  - Point API base URL to deployed backend (`REACT_APP_API_BASE=https://your-backend.example.com`).
+1. **Create PostgreSQL Database:**
+   - Dashboard → New → PostgreSQL
+   - Copy **Internal Database URL** (for backend)
+   - Copy **External Database URL** (for migrations)
 
-  ## 🛠 Next Improvements (Suggestions)
-  - Refresh token + rotation flow
-  - Rate limiting (login, signup)
-  - Password reset flow
-  - Token versioning for mass invalidation
-  - Centralized error handler middleware
+2. **Run Migrations:**
+   ```bash
+   psql "EXTERNAL_DB_URL" -f backend/migrations/001_init.sql
+   psql "EXTERNAL_DB_URL" -f backend/migrations/002_revoked_tokens.sql
+   ```
+
+3. **Deploy Backend:**
+   - Dashboard → New → Web Service
+   - Connect GitHub repo
+   - **Root Directory:** `backend`
+   - **Build Command:** `npm install`
+   - **Start Command:** `npm start`
+   - **Environment Variables:**
+     ```
+     DATABASE_URL = <Internal Database URL>
+     JWT_SECRET = <generate strong secret>
+     PORT = 5000
+     NODE_ENV = production
+     ```
+
+### Deploy Frontend on Vercel
+
+1. **Import from GitHub:**
+   - Go to [vercel.com/new](https://vercel.com/new)
+   - Import your repository
+   - **Framework Preset:** Create React App
+   - **Root Directory:** `frontend`
+   - **Build Command:** `npm run build`
+   - **Output Directory:** `build`
+
+2. **Add Environment Variable:**
+   ```
+   REACT_APP_API_URL = https://your-backend.onrender.com
+   ```
+
+3. **Deploy:** Click Deploy button
+
+4. **Update Backend CORS** (after getting Vercel URL):
+   ```javascript
+   // backend/src/app.js
+   const allowedOrigins = [
+     'http://localhost:3000',
+     'https://your-frontend.vercel.app'
+   ];
+   app.use(cors({ origin: allowedOrigins }));
+   ```
+
+### Alternative: Deploy Both on Render
+
+Both backend and frontend can be deployed on Render:
+- Backend: Web Service (as above)
+- Frontend: Static Site
+  - **Build Command:** `npm install && npm run build`
+  - **Publish Directory:** `build`  ## 🛠 Next Improvements (Suggestions)
+
+**Backend:**
+- Refresh token + rotation flow
+- Rate limiting (login, signup)
+- Password reset flow via email
+- Token versioning for mass invalidation
+- Centralized error handler middleware
+- Input sanitization for XSS prevention
+- API request logging
+
+**Frontend:**
+- Password strength indicator
+- Remember me functionality
+- Email verification flow
+- Two-factor authentication (2FA)
+- Dark mode toggle
+- Progressive Web App (PWA) support
+- Internationalization (i18n)
+- User settings page
+- Profile picture upload
